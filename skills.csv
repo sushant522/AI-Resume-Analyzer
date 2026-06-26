@@ -1,0 +1,63 @@
+skill,category
+Python,Data Science
+R,Data Science
+SQL,Data Science
+MySQL,Data Science
+PostgreSQL,Data Science
+MongoDB,Data Science
+Pandas,Data Science
+NumPy,Data Science
+Matplotlib,Data Science
+Seaborn,Data Science
+Scikit-learn,Data Science
+Machine Learning,Data Science
+Deep Learning,Data Science
+TensorFlow,Data Science
+Keras,Data Science
+PyTorch,Data Science
+Data Analysis,Data Science
+Data Science,Data Science
+Power BI,Data Science
+Tableau,Data Science
+Excel,Data Science
+Statistics,Data Science
+HTML,Web Development
+CSS,Web Development
+JavaScript,Web Development
+TypeScript,Web Development
+Bootstrap,Web Development
+Tailwind CSS,Web Development
+React,Web Development
+Angular,Web Development
+Vue.js,Web Development
+Node.js,Web Development
+Express.js,Web Development
+PHP,Web Development
+Laravel,Web Development
+Django,Web Development
+Flask,Web Development
+Streamlit,Web Development
+REST API,Web Development
+Git,Web Development
+GitHub,Web Development
+Java,Android
+Kotlin,Android
+Android Studio,Android
+Firebase,Android
+Flutter,Android
+Dart,Android
+Swift,iOS
+SwiftUI,iOS
+Xcode,iOS
+Objective-C,iOS
+Figma,UI/UX
+Adobe XD,UI/UX
+Sketch,UI/UX
+Wireframing,UI/UX
+Prototyping,UI/UX
+User Research,UI/UX
+UI Design,UI/UX
+UX Design,UI/UX
+Photoshop,UI/UX
+Illustrator,UI/UX
+Canva,UI/UX
