@@ -1,8 +1,10 @@
+## Handle all MYSQL databse Operations.
+
 import pymysql
 import os
 import streamlit as st
 from dotenv import load_dotenv
-
+# Load Environment Variable from .env.
 load_dotenv()
 
 
@@ -14,17 +16,19 @@ def get_database_connection():
         connection = pymysql.connect(
             host=os.getenv("MYSQL_HOST"),
             user=os.getenv("MYSQL_USER"),
+            port=int(os.getenv("MYSQL_PORT")),
             password=os.getenv("MYSQL_PASSWORD"),
             database=os.getenv("MYSQL_DATABASE"),
             charset="utf8mb4",
             autocommit=True,
+            ssl={"ssl": {}},
         )
 
         cursor = connection.cursor()
         return connection, cursor
 
     except pymysql.MySQLError as e:
-        st.error(f"Database connection failed: {e}")
+        st.error(f"❌ Database connection failed: {e}")
         return None, None
 
 
@@ -47,7 +51,6 @@ def create_tables(cursor):
         PRIMARY KEY (ID)
     )
     """
-
     cursor.execute(table_sql)
 
 
@@ -67,6 +70,19 @@ def insert_data(
 
     """
     Insert resume analysis data into the user_data table.
+    Args:
+        connection: Active MySQL connection.
+        cursor: Database cursor.
+        name : Candidate's name.
+        email : Candidate's email.
+        resume_score : Resume score.
+        timestamp : Analysis timestamp.
+        page_count : Number of resume pages.
+        predicted_field : Predicted career field.
+        candidate_level : Candidate experience level.
+        skills : Extracted skills.
+        recommended_skills : Suggested skills.
+
     """
     try:
         insert_sql = """
@@ -104,5 +120,5 @@ def insert_data(
         return True
 
     except pymysql.MySQLError as e:
-        st.error(f"Failed to insert data: {e}")
+        st.error(f"❌ Failed to insert data: {e}")
         return False
