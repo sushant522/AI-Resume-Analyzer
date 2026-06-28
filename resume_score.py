@@ -1,7 +1,8 @@
-def calculate_resume_score(resume_text, resume_data, ats_score=None):
-    """
+
+"""
     Calculate Resume Quality Score (0-100)
-    """
+"""
+def calculate_resume_score(resume_text, resume_data, ats_score=None):
 
     score = 0
     suggestions = []
