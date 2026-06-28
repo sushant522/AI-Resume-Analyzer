@@ -27,7 +27,7 @@ try:
 except LookupError:
     nltk.download("stopwords")
 
-### Connect to database.
+### Connect to database/Check Connection.
 connection, cursor = get_database_connection()
 
 if connection and cursor:
@@ -36,18 +36,19 @@ else:
     st.error("Unable to connect to the database.")
     st.stop()
 
-#
+#Function to builds the application homepage.
 def run():
-    # Display logo if available.
+    #------ Display logo if available-----
     try:
         img = Image.open("logo.png")
         st.image(img, width=180)
     except FileNotFoundError:
         st.warning("Logo file 'logo.png' not found.")
 
-    # App title
+    # -----App title-----
     st.title("📄 Resume Analyzer")
-    # Sidebar
+
+    # -----Sidebar-----
     st.sidebar.title("Navigation")
 
     activities = ["User", "Admin"]
@@ -56,7 +57,7 @@ def run():
         activities
     )
 
-    # Developer information
+    # -----Developer information-----
     linkedin_url = "https://www.linkedin.com/in/your-profile/"  # Replace with your profile
     st.sidebar.markdown(
         f"**Developed by:** [Sushant]({linkedin_url})",
@@ -66,7 +67,8 @@ def run():
 
 
 choice = run()
-
+ 
+# ------User/Admin Navigation------
 if choice == "User":
     st.markdown('''<h4 style='text-align: left; color: #021659;'> Upload your Resume and check your resume score</h4>''',
                  unsafe_allow_html=True)
@@ -81,32 +83,36 @@ if choice == "User":
 
         with st.spinner("Analyzing your resume..."):
             time.sleep(4)
-        save_image_path = os.path.join("Uploaded_Resume", pdf_file.name)
 
-        with open(save_image_path,"wb") as f:
-            f.write(pdf_file.getbuffer())
+        UPLOAD_FOLDER = "Uploaded_Resume"
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+        save_image_path = os.path.join(UPLOAD_FOLDER, pdf_file.name)
+
+        with open(save_image_path, "wb") as f:
+            f.write(pdf_file.getbuffer())  
         show_pdf(save_image_path)
 
-        # Load skills database
+        # Load skills database for Predicting field and Skill Recommendation. 
         try:
             skills_df = pd.read_csv("skills.csv")
         except FileNotFoundError:
             st.error("skills.csv not found.")
             st.stop()
 
-        #Extracting Resume data.
+        #Extracting Resume data(Name,Email,Phone.....etc).
         resume_text = pdf_reader(save_image_path)
         ats_score = None
 
         resume_data = extract_resume_data(resume_text,save_image_path)
-
+        
+        # ATS Score Calculation if Jd description is uploaded.
         if jd_text:
             ats_score = calculate_ats_score(resume_text,jd_text)
-
-        missing_skills = []
         
         if resume_data:
             st.header("**Resume Analysis**")
+            # ----Job description preview----
             if jd_text:
                 st.subheader("Job Description Preview")
                 
@@ -114,7 +120,7 @@ if choice == "User":
                     "JD Content",
                     jd_text[:1000],height=200
                 )
-
+            # Display Candidate Info.
             st.success("Hello " + (resume_data["name"] or "Candidate"))
             st.subheader("** Your Basic Info")
             try:
@@ -125,7 +131,7 @@ if choice == "User":
             except:
                 pass
 
-            # Determine candidate level
+            # Determine candidate level(fresher,experience,intermediate).
             pages = resume_data["no_of_pages"]
 
             if pages <= 1:
@@ -136,6 +142,9 @@ if choice == "User":
                 candidate_level = "Experienced"
 
             st.info(f"Candidate Level: {candidate_level}")
+
+            # Determine the skill Which match /missing with JD.
+            missing_skills = []
 
             if jd_text:
                 jd_skills = extract_skills_from_text(jd_text,skills_df)
@@ -153,12 +162,13 @@ if choice == "User":
                 missing_skills = [skill
                               for skill in jd_skills
                               if skill.lower() not in resume_skills_lower]
-                
+                # Calculate skill coverage.
                 if jd_skills:
                     skill_match_percent = round((len(matching_skills) / len(jd_skills)) * 100,2)
                 else:
                     skill_match_percent = 0
-
+                
+                # ----Display ATS Score and Skill Coverage----
                 st.subheader("ATS Analysis")
                 col1, col2 = st.columns(2)
                 with col1:
@@ -166,7 +176,8 @@ if choice == "User":
 
                 with col2:
                     st.metric("Skill Coverage",f"{skill_match_percent}%")
-
+                
+                # ------ATS Recommendation--------
                 if ats_score is not None:
                     if ats_score >= 80:
                         st.success("Excellent match for this job.")
@@ -195,14 +206,13 @@ if choice == "User":
                 else:
                     st.success("Excellent! All detected JD skills are present in your resume.")
             
-            # st.subheader("** Skills Recommendation**")
-            ## Skill shows
+            ## Display Skill
             st.subheader("Your Current Skills:")
 
             for skill in resume_data["skills"]:
                 st.markdown(f"{skill}")
 
-            ## Recommendation of Skill required for prefered Job.
+            ## Predict field  a/c to  candidate skills.
             recommended_field = resume_data.get("predicted_field", "Unknown")
             recommended_skills = []
 
@@ -210,7 +220,7 @@ if choice == "User":
                 st.success(f" Based on your resume, the predicted field is: {recommended_field}"
                            )
 
-            # Get skills belonging to the predicted category
+            # Display skills belonging to the predicted field.
             recommended_skills = (skills_df.loc[skills_df["category"] == recommended_field,"skill"]
                                                 .drop_duplicates()
                                                 .tolist()
@@ -226,20 +236,20 @@ if choice == "User":
             for skill in recommended_skills:
                 st.markdown(f"{skill}")
 
-             ## Insert into table
+             ## Generate timestamp.
             ts = time.time()
             cur_date = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
             cur_time = datetime.datetime.fromtimestamp(ts).strftime("%H:%M:%S")
             timestamp = str(cur_date+" "+cur_time)
             
 
-            ## Resume Writing Recommendation.
+            ## ------Resume Quality Score------
             st.subheader("Resume Quality Score")
 
             resume_score, suggestions = calculate_resume_score(resume_text,resume_data,ats_score)
 
+            #Display progress bar.
             my_bar = st.progress(0)
-
             for i in range(0, resume_score + 1, 5):
                 my_bar.progress(i)
                 time.sleep(0.02)
@@ -255,7 +265,7 @@ if choice == "User":
 
             st.balloons()
 
-            ## AI Suggestion Feedback.
+            ## ------AI Suggestion Feedback------
             st.subheader("AI Resume Feedback")
             feedback = []
 
@@ -273,7 +283,7 @@ if choice == "User":
 
             st.info("\n\n".join(feedback))
 
-            ## Inserting Data into Database.
+            ## Inserting/store Data into Database.
             saved = insert_data(connection=connection,cursor=cursor,
                                 name=resume_data["name"],email=resume_data["email"],
                                 res_score=resume_score,timestamp=timestamp,
@@ -290,10 +300,10 @@ if choice == "User":
             st.warning(
                        "Could not confidently predict a field from the detected skills."
                       )
-## Admin side.
+            
+## ------Admin side------
 else:
     st.success("Welcome to Admin Side")
-    #st.sidebar.subheader("ID/Password Require")
 
     ad_user = st.text_input("Username")
     ad_password = st.text_input("Password",type="password")
@@ -301,7 +311,7 @@ else:
         if ad_user == os.getenv("ADMIN_USER") and ad_password == os.getenv("ADMIN_PASSWORD"):
             st.success("Welcome Mr Sk")
 
-            #Display Data.
+            #----Display User Data----
             cursor.execute('''SELECT*FROM user_data''')
             data = cursor.fetchall()
             st.header("Users Data")
@@ -310,13 +320,14 @@ else:
                                             "Predicted Field","User Level",
                                             "Actual Skill","Recommended Skill"])
             st.dataframe(df)
+            #----Download User-data----
             st.download_button(
                 label="Download Report",
                 data=df.to_csv(index=False),
                 file_name="User_Data.csv",
                 mime="text/csv"
             )
-            ## Admin Side Data.
+            ## Retrieve all records from user data and store as Dataframe.
             query = "select * from user_data;"
             plot_data = pd.read_sql(query,connection)
 
